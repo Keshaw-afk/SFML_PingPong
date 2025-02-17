@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/System/Clock.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Window/Keyboard.hpp>
@@ -13,7 +14,7 @@ class Game
              Game();
         void run();
     private:
-        void update();
+        void update(sf::Time deltaTime);
         void processEvents();
         void render();
         void handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
@@ -24,11 +25,17 @@ class Game
         bool isMovingDown;
         bool isMovingLeft;
         bool isMovingRight;
+        const sf::Time TimePerFrame = sf::seconds(1.0f / 60.0f);
+        const float rectangleSpeed = 100.0f; 
 };
 
-Game::Game():window(sf::VideoMode({WIDTH, HEIGHT}), "Ping Pong"), rectangle()
+Game::Game():window(sf::VideoMode({WIDTH, HEIGHT}), "Ping Pong"), 
+    rectangle(),
+    isMovingRight(false),
+    isMovingLeft(false),
+    isMovingUp(false),
+    isMovingDown(false)
 {
-    window.setFramerateLimit(80);
 
     rectangle.setSize(sf::Vector2f(100, 50));
     rectangle.setPosition({10, 20});
@@ -39,10 +46,18 @@ Game::Game():window(sf::VideoMode({WIDTH, HEIGHT}), "Ping Pong"), rectangle()
 
 void Game::run()
 {
+    sf::Clock clock;
+    sf::Time timeSinceLastUpdate = sf::Time::Zero;
     while (window.isOpen())
     {
         processEvents();
-        update();
+        timeSinceLastUpdate += clock.restart();
+        while (timeSinceLastUpdate > TimePerFrame)
+        {
+            timeSinceLastUpdate -= TimePerFrame;
+            processEvents();
+            update(TimePerFrame);
+        }
         render();
     }
 }
@@ -88,27 +103,28 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
     }
 }
 
-void Game::update()
+void Game::update(sf::Time deltaTime)
 {
     sf::Vector2f movement(0.f, 0.f);
+
     if (isMovingUp)
     {
-        movement.y = movement.y - 0.1f;
+        movement.y = movement.y - rectangleSpeed;
     }
     if (isMovingDown)
     {
-        movement.y = movement.y + 0.1f;
+        movement.y = movement.y + rectangleSpeed;
     }
     if (isMovingLeft)
     {
-        movement.x = movement.x - 0.1f;
+        movement.x = movement.x - rectangleSpeed;
     }
     if (isMovingRight)
     {
-        movement.x = movement.x + 0.1f;
+        movement.x = movement.x + rectangleSpeed;
     }
 
-    rectangle.move(movement);
+    rectangle.move(movement*deltaTime.asSeconds());
 }
 
 void Game::render()
