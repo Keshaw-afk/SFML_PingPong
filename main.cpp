@@ -25,6 +25,8 @@ class Game
         bool isMovingDown;
         bool isMovingLeft;
         bool isMovingRight;
+        bool isDragging;
+        sf::Vector2f dragOffSet;
         const sf::Time TimePerFrame = sf::seconds(1.0f / 60.0f);
         const float rectangleSpeed = 100.0f; 
 };
@@ -34,7 +36,8 @@ Game::Game():window(sf::VideoMode({WIDTH, HEIGHT}), "Ping Pong"),
     isMovingRight(false),
     isMovingLeft(false),
     isMovingUp(false),
-    isMovingDown(false)
+    isMovingDown(false),
+    isDragging(false)
 {
 
     rectangle.setSize(sf::Vector2f(100, 50));
@@ -69,6 +72,30 @@ void Game::processEvents()
     {
         switch(event.type)
         {
+            case sf::Event::MouseButtonPressed:
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+                    if (rectangle.getGlobalBounds().contains(mousePos))
+                    {
+                        isDragging = true;
+                        dragOffSet = rectangle.getPosition() - mousePos;
+                    }
+                }
+                break;
+            case sf::Event::MouseButtonReleased:
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    isDragging = false;
+                }
+                break;
+            case sf::Event::MouseMoved:
+                if (isDragging)
+                {
+                    rectangle.setPosition(sf::Vector2f(event.mouseMove.x, event.mouseMove.y) + dragOffSet);
+                }
+                break;
+
             case sf::Event::KeyPressed:
                 handlePlayerInput(event.key.code, true);
                 break;
